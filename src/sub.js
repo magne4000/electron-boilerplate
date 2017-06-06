@@ -8,10 +8,7 @@ import './helpers/external_links.js';
 import electron from 'electron';
 
 const webview = document.querySelector('webview');
-webview.addEventListener('did-attach', function(e) {
-  electron.ipcRenderer.send('guestinstance', webview.guestinstance);
-}, false);
-
-webview.addEventListener('destroyed', function(e) {
-  console.log('webview destroyed', e);
-}, false);
+const guestinstance = electron.remote.getCurrentWindow().guestinstance;
+if (guestinstance) {
+  webview.setAttribute('guestinstance', guestinstance);
+}
