@@ -5,7 +5,7 @@
 
 import path from 'path';
 import url from 'url';
-import { app, Menu } from 'electron';
+import { app, Menu, ipcMain } from 'electron';
 import { devMenuTemplate } from './menu/dev_menu_template';
 import { editMenuTemplate } from './menu/edit_menu_template';
 import createWindow from './helpers/window';
@@ -43,6 +43,23 @@ app.on('ready', () => {
     protocol: 'file:',
     slashes: true,
   }));
+
+  ipcMain.on('guestinstance', function(e, value) {
+    setTimeout(function() {
+      const subWindow = createWindow('sub', {
+        width: 1000,
+        height: 600,
+      });
+
+      subWindow.guestinstance = value;
+
+      subWindow.loadURL(url.format({
+        pathname: path.join(__dirname, 'sub.html'),
+        protocol: 'file:',
+        slashes: true,
+      }));
+    }, 2000);
+  });
 
   if (env.name === 'development') {
     mainWindow.openDevTools();
