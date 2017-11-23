@@ -56,7 +56,7 @@ app.on('ready', () => {
 
 
   const CWD = '/tmp/test-npm';
-  const PACKAGE = 'color';
+  const PACKAGE = 'levelup';
   const child = cp.fork(require.resolve('npm/bin/npm-cli'), ['pack', PACKAGE], {
     cwd: CWD,
     execArgv: [],
@@ -75,7 +75,7 @@ app.on('ready', () => {
         .on("end", () => {
           fs.unlink(filename, e2 => {
             if (e2) return console.error(e2);
-            const c2 = cp.fork(require.resolve('npm/bin/npm-cli'), ['install', '--scripts-prepend-node-path', 'true', '--no-save', '--no-package-lock', '--production'], {
+            const c2 = cp.fork(require.resolve('npm/bin/npm-cli'), ['install', '--no-save', '--no-package-lock', '--production'], {
               cwd: extractdir,
               execArgv: []
             });
