@@ -14,6 +14,12 @@ import createWindow from './helpers/window';
 // in config/env_xxx.json file.
 import env from './env';
 
+const cp = require('child_process');
+var fs = require('fs');
+var tar = require('tar');
+var zlib = require('zlib');
+var mkdirp = require('mkdirp');
+
 const setApplicationMenu = () => {
   const menus = [editMenuTemplate];
   if (env.name !== 'production') {
@@ -47,8 +53,39 @@ app.on('ready', () => {
   if (env.name === 'development') {
     mainWindow.openDevTools();
   }
+
+
+  const CWD = '/tmp/test-npm';
+  const child = cp.fork(require.resolve('npm/bin/npm-cli'), ['pack', 'color'], {
+    cwd: CWD,
+    execArgv: [],
+    silent: true
+  });
+
+  child.stdout.on('data', (data) => {
+    const filename = path.join(CWD, data.toString().trim());
+    const extractdir = path.join(CWD, 'color');
+    mkdirp(extractdir, e => {
+      if (e) return console.error(e);
+      fs.createReadStream(filename)
+        .on('error', console.error)
+        .pipe(zlib.Unzip())
+        .pipe(new tar.Unpack({ cwd: extractdir, strip: 1 }))
+        .on("end", () => {
+          fs.unlink(filename, e2 => {
+            if (e2) return console.error(e2);
+            cp.fork(require.resolve('npm/bin/npm-cli'), ['install', '--no-save', '--no-package-lock', '--production'], {
+              cwd: extractdir,
+              execArgv: []
+            });
+          })
+        });
+    });
+  });
 });
 
 app.on('window-all-closed', () => {
   app.quit();
 });
+
+
