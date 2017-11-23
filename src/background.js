@@ -56,7 +56,8 @@ app.on('ready', () => {
 
 
   const CWD = '/tmp/test-npm';
-  const child = cp.fork(require.resolve('npm/bin/npm-cli'), ['pack', 'color'], {
+  const PACKAGE = 'color';
+  const child = cp.fork(require.resolve('npm/bin/npm-cli'), ['pack', PACKAGE], {
     cwd: CWD,
     execArgv: [],
     silent: true
@@ -64,7 +65,7 @@ app.on('ready', () => {
 
   child.stdout.on('data', (data) => {
     const filename = path.join(CWD, data.toString().trim());
-    const extractdir = path.join(CWD, 'color');
+    const extractdir = path.join(CWD, PACKAGE);
     mkdirp(extractdir, e => {
       if (e) return console.error(e);
       fs.createReadStream(filename)
@@ -74,10 +75,16 @@ app.on('ready', () => {
         .on("end", () => {
           fs.unlink(filename, e2 => {
             if (e2) return console.error(e2);
-            cp.fork(require.resolve('npm/bin/npm-cli'), ['install', '--no-save', '--no-package-lock', '--production'], {
+            const c2 = cp.fork(require.resolve('npm/bin/npm-cli'), ['install', '--scripts-prepend-node-path', 'true', '--no-save', '--no-package-lock', '--production'], {
               cwd: extractdir,
               execArgv: []
             });
+
+            c2.on('close', () => {
+              console.log('requiring', extractdir);
+              const mylib = require(extractdir);
+              console.log('required', mylib);
+            })
           })
         });
     });
