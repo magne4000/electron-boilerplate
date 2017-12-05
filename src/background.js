@@ -5,7 +5,7 @@
 
 import path from 'path';
 import url from 'url';
-import { app, Menu } from 'electron';
+import { app, Menu, autoUpdater } from 'electron';
 import { devMenuTemplate } from './menu/dev_menu_template';
 import { editMenuTemplate } from './menu/edit_menu_template';
 import createWindow from './helpers/window';
@@ -13,6 +13,8 @@ import createWindow from './helpers/window';
 // Special module holding environment variables which you declared
 // in config/env_xxx.json file.
 import env from './env';
+
+let quitAndInstall = false;
 
 const setApplicationMenu = () => {
   const menus = [editMenuTemplate];
@@ -44,11 +46,30 @@ app.on('ready', () => {
     slashes: true,
   }));
 
+  autoUpdater.setFeedURL('http://localhost:4444/update/channel/dummy/dummy/0.9.9');
+  autoUpdater.checkForUpdates();
+
+  autoUpdater.on('update-downloaded', (...args) => {
+    console.log('update-downloaded', ...args);
+    mainWindow.reload();
+    quitAndInstall = true;
+  });
+
+  autoUpdater.on('error', (...args) => {
+    console.error('error', ...args);
+  });
+
   if (env.name === 'development') {
     mainWindow.openDevTools();
   }
 });
 
 app.on('window-all-closed', () => {
-  app.quit();
+  if (quitAndInstall) {
+    console.log('QUIT AND INSTALL');
+    autoUpdater.quitAndInstall();
+  } else {
+    console.log('QUIT');
+    app.quit();
+  }
 });
