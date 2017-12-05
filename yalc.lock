@@ -1,0 +1,9 @@
+{
+  "version": "v1",
+  "packages": {
+    "electron-package-manager": {
+      "signature": "6403a42b053e19a845205872fce46f71",
+      "file": true
+    }
+  }
+}
